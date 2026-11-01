@@ -22,6 +22,7 @@ function App() {
   const [registrations, setRegistrations] = useState(readRegistrations)
   const [form, setForm] = useState({ name: '', email: '', phone: '' })
   const [success, setSuccess] = useState(false)
+  const [formError, setFormError] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => { localStorage.setItem('eventra-registrations', JSON.stringify(registrations)) }, [registrations])
@@ -36,14 +37,43 @@ function App() {
     setSelectedEvent(null)
     setRegisterEvent(event)
     setForm({ name: '', email: '', phone: '' })
+    setFormError('')
     setSuccess(false)
+    setFormError('')
   }
 
   const submitRegistration = e => {
     e.preventDefault()
-    setRegistrations(current => [...current, { id: Date.now(), eventId: registerEvent.id, eventTitle: registerEvent.title, ...form }])
+    const normalizedEmail = form.email.trim().toLowerCase()
+    const alreadyRegistered = registrations.some(registration =>
+      registration.eventId === registerEvent.id && registration.email.toLowerCase() === normalizedEmail
+    )
+    const registeredCount = registrations.filter(registration => registration.eventId === registerEvent.id).length
+    if (alreadyRegistered) {
+      setFormError('This email is already registered for this event.')
+      return
+    }
+    if (registeredCount >= registerEvent.seats) {
+      setFormError('Sorry, this event is fully booked.')
+      return
+    }
+    setRegistrations(current => [...current, {
+      id: Date.now(),
+      eventId: registerEvent.id,
+      eventTitle: registerEvent.title,
+      name: form.name.trim(),
+      email: normalizedEmail,
+      phone: form.phone.trim(),
+    }])
+    setFormError('')
     setSuccess(true)
   }
+
+  const cancelRegistration = id => {
+    setRegistrations(current => current.filter(registration => registration.id !== id))
+  }
+
+  const remainingSeats = event => Math.max(0, event.seats - registrations.filter(registration => registration.eventId === event.id).length)
 
   return (
     <div className="app-shell">
@@ -51,7 +81,7 @@ function App() {
         <a className="brand" href="#home"><span className="brand-mark">e</span><span>eventra<span className="brand-dot">.</span></span></a>
         <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation">☰</button>
         <nav className={menuOpen ? 'nav-links nav-open' : 'nav-links'}>
-          <a href="#home" onClick={() => setMenuOpen(false)}>Home</a><a href="#events" onClick={() => setMenuOpen(false)}>Explore events</a><a href="#about" onClick={() => setMenuOpen(false)}>About</a>
+          <a href="#home" onClick={() => setMenuOpen(false)}>Home</a><a href="#events" onClick={() => setMenuOpen(false)}>Explore events</a><a href="#my-registrations" onClick={() => setMenuOpen(false)}>My registrations</a><a href="#about" onClick={() => setMenuOpen(false)}>About</a>
         </nav>
         <a className="nav-cta" href="#events">Find an event <span>↗</span></a>
       </header>
@@ -87,14 +117,25 @@ function App() {
           </article>)}</div> : <div className="empty-state"><span>⌕</span><h3>No events found</h3><p>Try another search or choose a different category.</p><button className="text-link" onClick={() => { setSearch(''); setCategory('All events') }}>Clear filters ↗</button></div>}
         </section>
 
+        <section className="registrations-section section-wrap" id="my-registrations">
+          <div className="section-heading"><div><div className="eyebrow"><span className="eyebrow-line" /> YOUR EVENT PLANS</div><h2>My <span>registrations.</span></h2><p>Keep track of the experiences you've signed up for.</p></div><div className="event-count"><strong>{String(registrations.length).padStart(2, '0')}</strong><span>YOUR<br />BOOKINGS</span></div></div>
+          {registrations.length ? <div className="registration-list">{registrations.map(registration => {
+            const event = events.find(item => item.id === registration.eventId)
+            return <article className="registration-card" key={registration.id}>
+              <div className="registration-card-main"><span className="registration-status">✓ REGISTERED</span><h3>{registration.eventTitle}</h3><p>{registration.name} · {registration.email}</p><span className="registration-date">{event ? dateLabel(event.date) + ' · ' + event.time : 'Event details unavailable'}</span></div>
+              <button className="cancel-registration" onClick={() => cancelRegistration(registration.id)}>Cancel registration <span>×</span></button>
+            </article>
+          })}</div> : <div className="registrations-empty"><span>✳</span><h3>No registrations yet</h3><p>When you register for an event, it will appear here.</p><a className="text-link" href="#events">Explore events ↗</a></div>}
+        </section>
+
         <section className="feature-banner" id="about"><div className="feature-orb">✳</div><div className="eyebrow"><span className="eyebrow-line" /> MORE THAN A CALENDAR</div><h2>Show up for<br /><span>something new.</span></h2><p>Great experiences start with a simple yes. Browse what's happening, pick what speaks to you, and save your spot in just a few clicks.</p><a className="button button-light" href="#events">Find your experience <span>↗</span></a><div className="banner-decoration">MAKE<br />IT<br />COUNT.</div></section>
       </main>
 
       <footer className="footer"><a className="brand" href="#home"><span className="brand-mark">e</span><span>eventra<span className="brand-dot">.</span></span></a><p>Make memories. Meet people. Be there.</p><span>© 2026 EVENTRA · MADE FOR THE MOMENT</span></footer>
 
-      {selectedEvent && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setSelectedEvent(null) }}><section className="event-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button className="modal-close" onClick={() => setSelectedEvent(null)} aria-label="Close">×</button><img className="modal-image" src={selectedEvent.image} alt="" /><div className="modal-content"><span className="modal-category">{selectedEvent.category}</span><h2 id="modal-title">{selectedEvent.title}</h2><p>{selectedEvent.description}</p><div className="modal-facts"><span>◷ {dateLabel(selectedEvent.date)} · {selectedEvent.time}</span><span>⌖ {selectedEvent.venue}</span><span>◎ {selectedEvent.seats} spots available</span><strong>{selectedEvent.price}</strong></div><button className="button button-primary full-button" onClick={() => beginRegistration(selectedEvent)}>Register for this event ↗</button></div></section></div>}
+      {selectedEvent && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setSelectedEvent(null) }}><section className="event-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button className="modal-close" onClick={() => setSelectedEvent(null)} aria-label="Close">×</button><img className="modal-image" src={selectedEvent.image} alt="" /><div className="modal-content"><span className="modal-category">{selectedEvent.category}</span><h2 id="modal-title">{selectedEvent.title}</h2><p>{selectedEvent.description}</p><div className="modal-facts"><span>◷ {dateLabel(selectedEvent.date)} · {selectedEvent.time}</span><span>⌖ {selectedEvent.venue}</span><span>◎ {remainingSeats(selectedEvent)} spots available</span><strong>{selectedEvent.price}</strong></div><button className="button button-primary full-button" onClick={() => beginRegistration(selectedEvent)}>Register for this event ↗</button></div></section></div>}
 
-      {registerEvent && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setRegisterEvent(null) }}><section className="register-modal" role="dialog" aria-modal="true" aria-labelledby="register-title"><button className="modal-close" onClick={() => setRegisterEvent(null)} aria-label="Close">×</button>{success ? <div className="success-state"><div className="success-icon">✓</div><div className="eyebrow">YOU'RE ON THE LIST</div><h2>See you <span>there.</span></h2><p>Your registration for <strong>{registerEvent.title}</strong> has been saved on this device.</p><button className="button button-primary full-button" onClick={() => setRegisterEvent(null)}>Done</button></div> : <><div className="eyebrow"><span className="eyebrow-line" /> SAVE YOUR SPOT</div><h2 id="register-title">Let's make<br /><span>it happen.</span></h2><p className="register-subtitle">Register for <strong>{registerEvent.title}</strong></p><form onSubmit={submitRegistration} className="registration-form"><label>Full name<input required minLength="2" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Your name" /></label><label>Email address<input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="you@example.com" /></label><label>Phone number<input required type="tel" pattern="[0-9+() -]{8,15}" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Your contact number" /></label><button className="button button-primary full-button" type="submit">Confirm registration ↗</button></form><p className="privacy-note">Demo project · Registration details stay in this browser.</p></>}</section></div>}
+      {registerEvent && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setRegisterEvent(null) }}><section className="register-modal" role="dialog" aria-modal="true" aria-labelledby="register-title"><button className="modal-close" onClick={() => setRegisterEvent(null)} aria-label="Close">×</button>{success ? <div className="success-state"><div className="success-icon">✓</div><div className="eyebrow">YOU'RE ON THE LIST</div><h2>See you <span>there.</span></h2><p>Your registration for <strong>{registerEvent.title}</strong> has been saved on this device.</p><button className="button button-primary full-button" onClick={() => setRegisterEvent(null)}>Done</button></div> : <><div className="eyebrow"><span className="eyebrow-line" /> SAVE YOUR SPOT</div><h2 id="register-title">Let's make<br /><span>it happen.</span></h2><p className="register-subtitle">Register for <strong>{registerEvent.title}</strong></p><form onSubmit={submitRegistration} className="registration-form"><label>Full name<input required minLength="2" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Your name" /></label><label>Email address<input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="you@example.com" /></label><label>Phone number<input required type="tel" pattern="[0-9+() -]{8,15}" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Your contact number" /></label>{formError && <p className="form-error" role="alert">{formError}</p>}<button className="button button-primary full-button" type="submit">Confirm registration ↗</button></form><p className="privacy-note">Demo project · Registration details stay in this browser.</p></>}</section></div>}
     </div>
   )
 }
