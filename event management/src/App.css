@@ -29,3 +29,11 @@
 .registrations-empty p{font-size:11px;color:#9992a5;margin-bottom:14px}
 .form-error{color:#ff9baf!important;background:#4b1727;padding:10px 12px;border-radius:3px;font-size:10px!important}
 @media(max-width:760px){.registrations-section{padding-bottom:70px}.registration-card{align-items:flex-start;flex-direction:column}.cancel-registration{width:100%}}
+
+/* Phase 3: event discovery and form usability */
+.event-tools{display:flex;align-items:center;gap:22px}
+.sort-control{display:flex;align-items:center;gap:9px;color:#9c95a8;font-size:10px;white-space:nowrap}
+.sort-control select{background:#15121e;border:1px solid #ffffff25;color:#e9e3f1;padding:9px 11px;border-radius:3px;font-size:10px;outline:none}
+.sort-control select:focus-visible,.search-box:focus-within,.category-pill:focus-visible,.button:focus-visible,.cancel-registration:focus-visible{outline:2px solid #bba7ff;outline-offset:3px}
+.registration-form input:focus-visible{outline:2px solid #bba7ff;outline-offset:2px}
+@media(max-width:760px){.event-tools{align-items:stretch;flex-direction:column;gap:12px}.sort-control{justify-content:space-between}.sort-control select{flex:1;max-width:70%}}
