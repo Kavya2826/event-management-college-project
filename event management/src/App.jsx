@@ -17,6 +17,7 @@ const readRegistrations = () => { try { return JSON.parse(localStorage.getItem('
 function App() {
   const [category, setCategory] = useState('All events')
   const [search, setSearch] = useState('')
+  const [sortOrder, setSortOrder] = useState('date-asc')
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [registerEvent, setRegisterEvent] = useState(null)
   const [registrations, setRegistrations] = useState(readRegistrations)
@@ -27,11 +28,18 @@ function App() {
 
   useEffect(() => { localStorage.setItem('eventra-registrations', JSON.stringify(registrations)) }, [registrations])
 
-  const visibleEvents = useMemo(() => events.filter(event => {
-    const matchesCategory = category === 'All events' || event.category === category
-    const matchesSearch = (event.title + ' ' + event.venue + ' ' + event.category).toLowerCase().includes(search.toLowerCase())
-    return matchesCategory && matchesSearch
-  }), [category, search])
+  const visibleEvents = useMemo(() => {
+    const filtered = events.filter(event => {
+      const matchesCategory = category === 'All events' || event.category === category
+      const matchesSearch = (event.title + ' ' + event.venue + ' ' + event.category).toLowerCase().includes(search.trim().toLowerCase())
+      return matchesCategory && matchesSearch
+    })
+    return filtered.sort((a, b) => {
+      if (sortOrder === 'date-desc') return b.date.localeCompare(a.date)
+      if (sortOrder === 'title-asc') return a.title.localeCompare(b.title)
+      return a.date.localeCompare(b.date)
+    })
+  }, [category, search, sortOrder])
 
   const beginRegistration = event => {
     setSelectedEvent(null)
@@ -39,12 +47,15 @@ function App() {
     setForm({ name: '', email: '', phone: '' })
     setFormError('')
     setSuccess(false)
-    setFormError('')
   }
 
   const submitRegistration = e => {
     e.preventDefault()
     const normalizedEmail = form.email.trim().toLowerCase()
+    if (form.name.trim().length < 2 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(normalizedEmail) || !/^[0-9+() -]{8,15}$/.test(form.phone.trim())) {
+      setFormError('Please enter a valid name, email address and phone number.')
+      return
+    }
     const alreadyRegistered = registrations.some(registration =>
       registration.eventId === registerEvent.id && registration.email.toLowerCase() === normalizedEmail
     )
@@ -110,7 +121,7 @@ function App() {
 
         <section className="events-section section-wrap" id="events">
           <div className="section-heading"><div><div className="eyebrow"><span className="eyebrow-line" /> THE GOOD STUFF</div><h2>Find your <span>next thing.</span></h2><p>From big ideas to good music — there's a place for you.</p></div><div className="event-count"><strong>{String(visibleEvents.length).padStart(2, '0')}</strong><span>EVENTS<br />TO EXPLORE</span></div></div>
-          <div className="event-controls"><div className="category-list">{categories.map(item => <button key={item} className={category === item ? 'category-pill active' : 'category-pill'} onClick={() => setCategory(item)}>{item}</button>)}</div><label className="search-box"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search events..." aria-label="Search events" /><kbd>↵</kbd></label></div>
+          <div className="event-controls"><div className="category-list">{categories.map(item => <button key={item} className={category === item ? 'category-pill active' : 'category-pill'} onClick={() => setCategory(item)}>{item}</button>)}</div><div className="event-tools"><label className="sort-control">Sort by<select value={sortOrder} onChange={e => setSortOrder(e.target.value)} aria-label="Sort events"><option value="date-asc">Date: soonest first</option><option value="date-desc">Date: latest first</option><option value="title-asc">Name: A to Z</option></select></label><label className="search-box"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search events..." aria-label="Search events" /><kbd>↵</kbd></label></div>
           {visibleEvents.length ? <div className="events-grid">{visibleEvents.map(event => <article className="event-card" key={event.id}>
             <button className="event-image-button" onClick={() => setSelectedEvent(event)} aria-label={'View ' + event.title}><img src={event.image} alt={event.title} onError={e => { e.currentTarget.src = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1000&q=80' }} /><span className="card-category">{event.category}</span><span className="image-arrow">↗</span></button>
             <div className="event-card-body"><div className="event-meta"><span>◷ {dateLabel(event.date)}</span><span>{event.time}</span></div><h3>{event.title}</h3><p className="event-venue">⌖ {event.venue}</p><div className="card-footer"><strong>{event.price}</strong><button onClick={() => setSelectedEvent(event)}>View details <span>↗</span></button></div></div>
@@ -135,7 +146,7 @@ function App() {
 
       {selectedEvent && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setSelectedEvent(null) }}><section className="event-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button className="modal-close" onClick={() => setSelectedEvent(null)} aria-label="Close">×</button><img className="modal-image" src={selectedEvent.image} alt="" /><div className="modal-content"><span className="modal-category">{selectedEvent.category}</span><h2 id="modal-title">{selectedEvent.title}</h2><p>{selectedEvent.description}</p><div className="modal-facts"><span>◷ {dateLabel(selectedEvent.date)} · {selectedEvent.time}</span><span>⌖ {selectedEvent.venue}</span><span>◎ {remainingSeats(selectedEvent)} spots available</span><strong>{selectedEvent.price}</strong></div><button className="button button-primary full-button" onClick={() => beginRegistration(selectedEvent)}>Register for this event ↗</button></div></section></div>}
 
-      {registerEvent && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setRegisterEvent(null) }}><section className="register-modal" role="dialog" aria-modal="true" aria-labelledby="register-title"><button className="modal-close" onClick={() => setRegisterEvent(null)} aria-label="Close">×</button>{success ? <div className="success-state"><div className="success-icon">✓</div><div className="eyebrow">YOU'RE ON THE LIST</div><h2>See you <span>there.</span></h2><p>Your registration for <strong>{registerEvent.title}</strong> has been saved on this device.</p><button className="button button-primary full-button" onClick={() => setRegisterEvent(null)}>Done</button></div> : <><div className="eyebrow"><span className="eyebrow-line" /> SAVE YOUR SPOT</div><h2 id="register-title">Let's make<br /><span>it happen.</span></h2><p className="register-subtitle">Register for <strong>{registerEvent.title}</strong></p><form onSubmit={submitRegistration} className="registration-form"><label>Full name<input required minLength="2" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Your name" /></label><label>Email address<input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="you@example.com" /></label><label>Phone number<input required type="tel" pattern="[0-9+() -]{8,15}" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Your contact number" /></label>{formError && <p className="form-error" role="alert">{formError}</p>}<button className="button button-primary full-button" type="submit">Confirm registration ↗</button></form><p className="privacy-note">Demo project · Registration details stay in this browser.</p></>}</section></div>}
+      {registerEvent && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setRegisterEvent(null) }}><section className="register-modal" role="dialog" aria-modal="true" aria-labelledby="register-title"><button className="modal-close" onClick={() => setRegisterEvent(null)} aria-label="Close">×</button>{success ? <div className="success-state"><div className="success-icon">✓</div><div className="eyebrow">YOU'RE ON THE LIST</div><h2>See you <span>there.</span></h2><p>Your registration for <strong>{registerEvent.title}</strong> has been saved on this device.</p><button className="button button-primary full-button" onClick={() => setRegisterEvent(null)}>Done</button></div> : <><div className="eyebrow"><span className="eyebrow-line" /> SAVE YOUR SPOT</div><h2 id="register-title">Let's make<br /><span>it happen.</span></h2><p className="register-subtitle">Register for <strong>{registerEvent.title}</strong></p><form onSubmit={submitRegistration} className="registration-form"><label>Full name<input autoComplete="name" required minLength="2" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Your name" /></label><label>Email address<input autoComplete="email" required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="you@example.com" /></label><label>Phone number<input autoComplete="tel" required type="tel" pattern="[0-9+() -]{8,15}" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Your contact number" /></label>{formError && <p className="form-error" role="alert">{formError}</p>}<button className="button button-primary full-button" type="submit">Confirm registration ↗</button></form><p className="privacy-note">Demo project · Registration details stay in this browser.</p></>}</section></div>}
     </div>
   )
 }
