@@ -11,3 +11,21 @@
 @media(max-width:1200px){.section-wrap,.stats-strip,.feature-banner,.footer{margin-left:34px;margin-right:34px}.hero-section{padding-left:44px;padding-right:44px}.stats-strip{gap:38px}}
 @media(max-width:760px){.navbar{height:70px;padding:0 20px}.menu-toggle{display:block;margin-left:auto;margin-right:16px}.nav-links{display:none;position:absolute;top:69px;left:0;right:0;background:#15121e;padding:20px;flex-direction:column;gap:20px;border-bottom:1px solid #ffffff20}.nav-links.nav-open{display:flex}.nav-cta{padding:10px;font-size:10px}.hero-section{padding:65px 24px 80px;display:flex;flex-direction:column;align-items:stretch;gap:45px}.hero-copy h1{font-size:55px;letter-spacing:-3px}.hero-description{font-size:13px}.hero-proof{margin-top:35px}.hero-visual{padding:0 12px 0 0}.hero-image-wrap{height:330px}.floating-tag{right:-12px;top:20px}.hero-side-note{right:-17px}.hero-bottom{left:24px;right:24px}.stats-strip{margin:0 24px;padding:22px 0;gap:15px;justify-content:space-between;flex-wrap:wrap}.stats-strip>div{gap:7px}.stats-strip strong{font-size:22px}.stats-strip span{font-size:8px;max-width:60px}.stats-strip p{display:none}.section-wrap{margin:0 24px}.events-section{padding:75px 0}.section-heading h2{font-size:39px}.event-controls{align-items:stretch;flex-direction:column;margin-top:27px}.search-box{max-width:none}.events-grid{grid-template-columns:1fr 1fr;gap:13px}.event-image-button{height:145px}.event-card-body{padding:13px}.event-card h3{font-size:16px;min-height:38px}.event-meta{font-size:8px}.event-venue{font-size:9px;min-height:26px}.card-footer{margin-top:13px}.card-footer button{font-size:9px}.feature-banner{margin:0 24px 65px;padding:40px 27px;min-height:340px}.feature-banner h2{font-size:43px}.feature-banner:after,.feature-orb,.banner-decoration{display:none}.footer{margin:0 24px;gap:13px;flex-wrap:wrap}.footer p{order:3;width:100%}.footer>span{font-size:7px}}
 @media(max-width:420px){.events-grid{grid-template-columns:1fr}.event-image-button{height:190px}.event-card h3{min-height:0}.event-venue{min-height:0}.hero-copy h1{font-size:48px}.category-pill{padding:8px 10px}.register-modal{padding:32px 23px 25px}}
+
+/* Phase 2: registration management */
+.registrations-section{padding:0 0 105px}
+.registration-list{display:grid;gap:12px;margin-top:28px}
+.registration-card{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:21px 23px;background:#12101a;border:1px solid #ffffff18}
+.registration-status{font-size:8px;letter-spacing:1.4px;color:#bba8ff;font-weight:700}
+.registration-card h3{font:600 19px 'Space Grotesk';margin:8px 0 5px;color:#f4f1fa}
+.registration-card p,.registration-date{font-size:10px;color:#9c95a8}
+.registration-date{display:block;margin-top:8px}
+.cancel-registration{border:1px solid #a78bfa66;background:transparent;color:#d9cefa;padding:10px 13px;border-radius:3px;font-size:10px;cursor:pointer;white-space:nowrap}
+.cancel-registration:hover{background:#a78bfa;color:#120e1d}
+.cancel-registration span{font-size:15px;margin-left:8px}
+.registrations-empty{text-align:center;padding:48px 20px;margin-top:28px;border:1px dashed #ffffff2b}
+.registrations-empty>span{font-size:28px;color:#a78bfa}
+.registrations-empty h3{font:500 21px 'Space Grotesk';margin:10px 0;color:#f4f1fa}
+.registrations-empty p{font-size:11px;color:#9992a5;margin-bottom:14px}
+.form-error{color:#ff9baf!important;background:#4b1727;padding:10px 12px;border-radius:3px;font-size:10px!important}
+@media(max-width:760px){.registrations-section{padding-bottom:70px}.registration-card{align-items:flex-start;flex-direction:column}.cancel-registration{width:100%}}
